@@ -1,0 +1,254 @@
+================
+Docker Examples
+================
+
+
+Table of contents:
+
+01. Run an nginx web server
+02. Run a php (LAN server)
+03. Run nginx and httpd (apache) server containers
+04. Share volume from host to container
+05. Wordpress, mysql, phpmyadmin
+06. Environmental variables during container creation
+07. Create a dockerfile to run Jupyter Lab
+
+
+
+----------------------------------------------------------------
+
+// 01. Run an nginx web server //
+
+Run the nginx container (from nginx image)
+
+$ docker run -d -p 800 nginx container
+$ docker stop <container_name>
+
+
+
+----------------------------------------------------------------
+
+// 02. Run a php (LAN server) //
+
+- create the dockerfile
+- create the src/ required directory with the .php script
+
+$ docker build -t myphpapache .
+$ docker images
+$ docker run -d -p 80:80 myphpapache
+
+
+----------------------------------------------------------------
+
+// 03. Run nginx and httpd (apache) server containers//
+
+
+$ docker run -d -p 8000:80 nginx
+$ docker run -d -p 8001:80 httpd
+
+$ docker ps
+$ docker images
+
+
+----------------------------------------------------------------
+
+// 04. Share volume from host to container //
+
+.
+├── apache
+│   └── index.html
+├── dockerfile
+├── Docker_notes.txt
+├── nginx
+│   └── inxex.html
+└── src
+    └── index.php
+
+
+This is doesn't work! I have to use full path to map the volumes.
+
+(WRONG) $ docker run -dit --name my-apache-app -p 8080:80 -v apache:/usr/local/apache2/htdocs/ httpd:2.4
+
+(RIGHT) $ docker run -dit --name my-apache-app -p 8080:80 -v ${PWD}/apache:/usr/local/apache2/htdocs/ httpd:2.4
+
+
+(WRONG) $ docker run -dit --name my-nginx-app -p 8081:80 -v nginx:/usr/share/nginx/html/ nginx
+
+(RIGHT) $ docker run -dit --name my-nginx-app -p 8081:80 -v ${PWD}/nginx:/usr/share/nginx/html/ nginx
+
+
+
+SOS: Αν κάνω mount τον local φάκελο στον φάκελο του container, κατά το docker run,
+     δεν χρειάζεται μέσα στο dockerfile να χρησιμοποιήσω την εντολή COPY για να μεταφέρω τα αρχεία.
+     Αυτό με βοηθάει ώστε να κάνω development και να βλέπω κατευθείαν τις αλλαγές, χωρίς να χρειάζεται
+     κάθε φορά να φτιάχνω καινούριο container, ώστε να ενημερωθούν οι αλλαγές.
+     Τα volumes μπορώ να τα ορίσω και μέσα από το dockerfile.
+
+
+
+----------------------------------------------------------------
+
+// 05. Wordpress, mysql, phpmyadmin //
+
+
+1. Install an ubuntu system:
+
+$ docker pull ubuntu         (This will download the latest ubuntu image from dockerhub)
+$ docker run -ti ubuntu bash
+
+
+2. Open a new terminal and check 
+$ docker ps   (there is a running ubuntu system)
+$ docker exec -ti <name> bash
+(inside docker) $ exit
+
+
+3. Wordpress link with mysql
+$ docker run --name mywordpress -p 8080:80 --link mysupersql:mysql -d wordpress
+ 
+
+4. phpmyadmin link with mysql
+$ docker run --name myadmin -d --link mysupersql:db -p 8081:80 phpmyadmin/phpmyadmin
+
+
+
+----------------------------------------------------------------
+
+// 06. Environmental variables during container creation //
+
+-e : environment variable
+
+(1 teminal) $ docker run --name ubuntu_container -e MYVAR=testing -ti ubuntu bash 
+            /# echo $MYVAR
+            testing
+
+(2 terminal) $ docker exec -ti ubuntu_container bash
+             /# echo $MYVAR
+             testing
+
+
+
+
+Run a mysql server:
+
+$ docker pull mysql
+$ docker run --name mysupersql -e MYSQL_ROOT_PASSWORD=root -d mysql:5.7
+
+
+- First command downloads the latest image of mysql.
+- Second commant runs the image of 5.7 version.
+
+Because the last command, may be not be the same with 5.7, 
+docker will start to download the 5.7 version.
+In addition, because docker is based on layers, some layers of 5.7 version
+will be the same with latest version, so the docker will not re-install these layers.
+
+
+```
+Logs:
+Unable to find image 'mysql:5.7' locally
+5.7: Pulling from library/mysql
+afb6ec6fdc1c: Already exists 
+0bdc5971ba40: Already exists 
+97ae94a2c729: Already exists 
+f777521d340e: Already exists 
+1393ff7fc871: Already exists 
+a499b89994d9: Already exists 
+7ebe8eefbafe: Already exists 
+4eec965ae405: Pull complete 
+a531a782d709: Pull complete 
+270aeddb45e3: Pull complete 
+b25569b61008: Pull complete 
+Digest: sha256:d16d9ef7a4ecb29efcd1ba46d5a82bda3c28bd18c0f1e3b86ba54816211e1ac4
+Status: Downloaded newer image for mysql:5.7
+33f3387eba2d7e662c212020ee92344cc4adc4e77ae9adfb94bb4f7250a35321
+```
+
+
+
+
+----------------------------------------------------------------
+
+// 07. Create a dockerfile to run Jupyter Lab //
+
+
+Dockerfile (save as Dockerfile):
+
+
+```
+FROM ubuntu
+EXPOSE 8888
+RUN apt-get update -y;
+RUN apt-get install
+RUN apt-get install -y python3 python3-pip
+RUN pip3 install  --upgrade pip		
+RUN pip3 install jupyterlab ;
+```
+
+
+-> Steps:
+
+1. Build image from dockerfile:
+
+$ docker build -t myjupyter .
+$ docker images
+
+2. Create and start container from image:
+
+$ docker run myjupyter -p 8888:8888 -ti myjupyter bash
+/# jupyter-lab --ip=0.0.0.0
+
+/# jupyter-lab --ip=0.0.0.0 --allow-root
+
+
+
+
+-> Give rights tot jupyter-lab:
+
+- Jupyer lab, by default gets requests only from localhost.
+In this example, localhost is the docker container so I have to adjust it
+in order to get calls from every ip, so I can use it from host.
+In addition I have to allow the jupyter-lab to run as root.
+
+How?
+
+One way to achieve this is to run the appropriate commands from inside the docker container using -ti (interactive terminal).
+But, I can skip all this process, by adding the following line in the Dockerfile
+
+> CMD jupyter-lab --ip=0.0.0.0 --allow-root --NotebookApp.token=''
+
+
+Be carefull: 
+This command must be used only when I run the jupyter-lab localy and not in a remote server,
+because it is very dangerous.
+
+
+-> Commands:
+
+$ docker build -t myjupyter .
+$ docker run -p 8888:888 -d myjupyter
+$ docker ps
+
+Jupyter-lab running on: http://127.0.0.1:8888/lab
+
+
+
+-> Map volumes between host and docker container,
+   in order to gain access in scripts created in jupyter-lab from the host machine.
+
+1. Add in Dockerfile the following command
+
+> WORKDIR /src
+
+2. Define a volume during container creation
+> -v ${PWD}:/src
+
+
+3. Re-create the image
+
+$ docker build -t myjupyter .
+$ docker run -v ${PWD}:/src -p 8888:8888 -d myjupyter
+
+
+
+

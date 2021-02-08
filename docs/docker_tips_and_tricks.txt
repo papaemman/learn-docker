@@ -1,0 +1,58 @@
+=========================
+Docker tips & tricks
+=========================
+
+
+--------------------------------------------------------------
+
+// Delete not usefull <none>:<none> images : //
+
+$ docker rmi $(docker images -f "dangling=true" -q)
+
+
+
+--------------------------------------------------------------
+
+// Add new volume to existing container : //
+
+
+-> Solution 1: 
+
+I can commit the existing container (that is create a new image from container’s changes) and then run it with your new mounts.
+
+$ docker ps (get the container's name)
+
+$ docker commit <container's name> <new image name>
+
+$ docker run -ti -v "$PWD/dir1":/dir1 -v "$PWD/dir2":/dir2 newimagename /bin/bash
+
+$ docker create  -e PASSWORD=fGH67  -p 8788:8787 -v /mnt/extrahd/DATA/medoidData:/home/rstudio/kitematic --name stationarity-pan-medoid-ai -i -t stationarity-medoid-ai
+
+
+
+-> Solution 2:
+
+This is the best answer as it totally preserves the existing container.
+This is what I did:
+ 
+1. Stop the docker engine: systemctl stop docker.service 
+
+2. Edit config.v2.json: vim <(jq . /var/lib/docker/containers/<container-ID>/config.v2.json)    # This command will create a new config file
+
+3. Save updates to a file: :w config.v2.json 
+
+4. Exit vim: :q! 
+
+5. Update existing file: jq -c . config.v2.json > /var/lib/docker/containers/<container-ID>/config.v2.json 
+
+I've successfully mount /home/<user-name> folder of my host to the /mnt folder of the existing (not running) container.
+Add mountpoints:
+"MountPoints":{"/home/rstudio/kitematic":{"Source":"/mnt/extrahd/DATA/medoidData","Destination":"home/rstudio/kitematic","RW":true,"Name":"","Driver":"","Type":"bind","Propagation":"rprivate","Spec":{"Type":"bind","Source":"/mnt/extrahd/DATA/medoidData","Target":"home/rstudio/kitematic"},"SkipMountpointCreation":false}}
+
+6. Start the docker engine: systemctl start docker.service 
+
+7. Start the container if necessary: docker start <container-name/ID> 
+
+8. Enjoy :-)
+
+

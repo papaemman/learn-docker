@@ -1,0 +1,365 @@
+==============================
+Learng Docker tutorial Notes
+==============================
+
+
+// Table of contents: //
+
+
+01. Keywords
+02. Workflow
+03. Docker commands
+04. General Notes
+05. Dockerfile
+06. Docker compose
+
+
+---------------------------------------------------------
+
+// 01. Keywords //
+
+- Dockerhub: repository with docker images.
+I can create my own docker images and upload them on dockerhub. It works like github.
+
+
+
+---------------------------------------------------------
+
+// 02. Workflow: //
+
+Dockerfile -> docker Image (Download from Docker hub) -> docker container
+              (docker build)                              (docker run)
+
+
+
+
+----------------------------------------------------------
+
+// 03. Docker commands //
+
+
+-> Commands:
+
+$ docker
+
+$ docker --help
+$ docker <command> --help
+
+
+$ docker build -t    : Create image from dockerfile
+$ docker images      : Check available images
+$ docker ps          : Check containers
+$ docker run         : Run a docker image (build the container and start it) 
+$ docker start       : Start a docker container 
+$ docker stop        : Stop a docker container
+$ docker rm <name>   : Delete (not-working) container
+$ docker rmi <name>  : Delete images
+
+$ docker ps -a       : See all docker containers (both running and stopped). I can start these containers or delete them.
+
+$ docker pull <image> : Download and docker image from dockerhub (without running it)
+
+$ docker exec <name> <command> : Execute a command inside a docker container from host.
+		                 If I want to have interaction with docker container, I should add -ti (terminal & interactive)
+
+
+-> Options:
+
+-t 	       : tag (name) - docker build
+-t             : terminal   - docker run
+-i             : interactive
+-d             : daemon - detached (Run docker container on background, don't keep busy the terminal)
+-p ή --publish : map local ports with container's ports <local>:<remote>
+-a             : show all
+--rm           : remove
+--name         : define name for a container
+-v             : map volume from host to container -v <local>:<remote> 
+-f             : (force) Use to force an action. For example rm a container while it's still running.
+
+-e             : environment
+
+--link         : link containers between them
+
+- PWD          : Print working directory
+
+
+
+----------------------------------------------------------
+
+// 04. General Notes: //
+
+- local: the host machine
+- remote: the container
+
+
+- UNIX systems use single dash (-) to denote that the following parameters are single letter,
+  and use double dashes (--) to denote that the following letters are one single parameter.
+
+Fore example, 
+-p  -- publish
+-d  --detached
+
+
+- docker remains active only while runs something.
+
+- docker container runs isolated from the host. In order to interact with docker container I have to utilize ports.
+
+- Port 80 is the default port for http service
+
+- When docker run can't find an image localy, it is download it from dockerhub
+
+- New docker containers get a random name, if I don't specify one.
+
+- If I don't specify an image version, docker automaticaly download the last one. A good practice is always specify the required version.
+
+- Docker works with layers in order to achieve better performance in terms of speed and memory effieciency.
+
+- Obvisously, docker images uploaded on Dockerhub, have been created from dockerfiles.
+  Most of the times, I can find this dockerfiles on github.
+
+- docker build uses cache memory to avoid re-run unnecessary commands.
+
+
+- If we run a docker container with the option --rm, the docker container auto-deleted when we stop it.
+$ docker run -d --rm -p 8001:80 httpd
+$ docker stop 
+
+
+----------------------------------------------------------------
+
+
+// 05. Dockerfile //
+
+
+-> Commands:
+
+- FROM
+- ENV
+- RUN
+- WORKDIR
+- EXPOSE
+- CMD
+- USER
+
+
+-> Notes:
+
+- The RUN command executed from host machine at the container creation time,
+  while CMD command will executed from inside the docker container.
+
+- apt-get is the default package manager of Ubuntu OS (the base image we use)
+
+- flag -y means that we answer "yes" in every question during image building
+
+- pip is the defult package manager of python and pip3 is the default package manager of python3
+
+-  Use identation σwhile writting a dockerfile / docker compose file
+
+
+-------------------------------------------------------------------------------------------
+
+// 06. Docker compose //
+
+How to create multiple docker containers and set them to cooperate?
+
+First way:
+- Create manually multiple containers and link them with --link.
+
+
+Second way: 
+- Use a docker-compose.yml file to automatically create multiple containers at once.
+
+
+
+-> Example: docker-compose.yml (key-value pairs)
+
+version: '3'
+
+services:
+ mysql:
+  image: mysql:5.7.20
+  environment: 
+   - "MYSQL_USER=root"
+   - "MYSQL_ROOT_PASSWORD=root"
+  ports:
+   - 3306:3306
+
+ phpmyadmin:
+  image: phpmyadmin/phpmyadmin
+  depends_on: 
+   - mysql
+  ports:
+   - "8090:80"
+  links:
+   - mysql:db
+
+
+
+-> Commands:
+
+$ docker-compose up -d
+$ docker-compose up --build -d (option --build to recreate containers
+$ docker-compose logs   (Check container's logs)
+$ docker ps
+$ docker-compose stop   (Για να σταματήσω τα containers)
+
+
+
+
+======================
+Docker and python
+======================
+
+Tutorials:
+- https://www.youtube.com/watch?v=Jq68axbKIbg&list=WL&index=5
+
+
+Reproducibility
+Easy deployment
+DS/ML/DL
+
+
+Don't reinvet the wheel
+repo2docker
+
+
+
+- OS
+- python runtime
+- libraries versions
+- configuration files
+
+
+Docker vs Virtual Machines
+
+
+Each instruction creates a layer
+
+-------------------------
+
+
+python 3.8.2-slim-buster
+
+jupyter-docker-stacks
+
+docs.docker dockerfile best practices
+
+https://github.com/docker-science/cookiecutter-docker-science
+
+---------------------------
+
+Mount Volumes
+
+1. Databases (access to port of the database)
+
+
+2. Mount Volumes
+--volume 
+
+
+
+-------------------
+
+1. Rebuild your images frequently - get security updates for system packates
+
+
+2. Never work as root . minimize the privileges
+
+3. You do not wnat to use Alpine Linux (go for buster, strech or the Jupyter stack)
+
+
+4. Always know what you are expecting
+ - pin, version everything
+
+5. Leverage the build cache
+
+6. Use one Dokcerfile per project
+
+7. Use mutli-stage builde (need to compile code)
+
+8. Make images identifiable
+
+9. Do not reinvet the whell (use repo2docker)
+
+10. Automate (don't build and push manually)
+
+------------------------
+
+Docker terminology
+
+1. Container: Software unit that packages the code and its dependencies
+
+2. Image: a frozen snapshot of a Container
+
+3. Dockerfile: file used to build images
+
+
+
+
+Createinf Docker images
+
+1. Freeze a container using docker commit
+
+
+2. Dockerfile + docker build 
+
+------------------------
+
+Dockerfile Commands
+
+FROM
+LABEL
+COPY
+ENV
+WORKDIR
+RUN
+CMD
+
+
+Commands
+
+$ docker cp
+
+$ docker run -v /host/path/:/docker/container/path
+
+
+$ docker run -p 9999:8888
+
+<host port>:<docker port>
+
+------------------------
+
+Dockerfile
+
+
+
+------------------------
+Jupyer notebook
+
+$ docker run -it --rm --name ds -p 8888:8888 jupyter/datascience-notebook
+
+
+
+------------------------
+Docker flask
+
+- app.py
+- index.html
+- Dokcerfile
+- requirements.txt
+
+
+$ docker build --tag my-flask-app .
+
+# Build from specific Dockerfile name
+$ docker build -f flask.Dockerfile --tag my-flask-app .
+
+# RUN 
+$ docker run -p 5000:5000 my-flask-app
+
+
+
+
+
+
+

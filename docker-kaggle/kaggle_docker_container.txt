@@ -1,0 +1,104 @@
+==============================================
+Kaggle docker container directories structure
+==============================================
+
+
+-----------------------------------------------------
+
+root directory of the docker container
+
+/
+.
+├── bin
+├── boot
+├── dev
+├── entrypoint.sh
+├── etc
+├── home
+├── kaggle
+├── lib
+├── lib64
+├── media
+├── mnt
+├── opt
+├── proc
+├── root
+├── run
+├── run_jupyter.sh
+├── sbin
+├── src
+├── srv
+├── sys
+├── tmp
+├── usr
+└── var
+
+
+-----------------------------------------------------
+
+/kaggle directory contains 
+
+- the competition's datasets in the /input directory
+- output datasets in the /kaggle/working directory
+- current running notebook in working
+
+
+
+/kaggle
+.
+├── input
+│   └── jane-street-market-prediction
+│       ├── example_sample_submission.csv
+│       ├── example_test.csv
+│       ├── features.csv
+│       ├── janestreet
+│       │   ├── __init__.py
+│       │   └── competition.cpython-37m-x86_64-linux-gnu.so
+│       └── train.csv
+├── lib
+│   └── kaggle
+│       └── gcp.py
+│
+├── working
+│   ├── __notebook_source__.ipynb
+│   └── notebook_for_submission.ipynb
+│
+├── datasets
+│
+├── notebooks
+│
+└── src
+
+
+-----------------------------------------------------
+
+/home is empty
+
+/home
+.
+
+-----------------------------------------------------
+
+python version
+
+>>> import sys
+>>>sys.executable
+'/opt/conda/bin/python3.7'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

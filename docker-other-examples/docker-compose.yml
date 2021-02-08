@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+ mysql:
+  image: mysql:5.7.20
+  environment: 
+   - "MYSQL_USER=root"
+   - "MYSQL_ROOT_PASSWORD=root"
+  ports:
+   - 3306:3306
+  volumes:
+   - ./mysqldata:/var/lib/mysql
+
+ phpmyadmin:
+  image: phpmyadmin/phpmyadmin
+  depends_on: 
+   - mysql
+  ports:
+   - "8090:80"
+  links:
+   - mysql:db
+
+ wordpress:
+  image: wordpress
+  depends_on:
+   - mysql
+  ports:
+   - 8080:80
+  environment:
+   WORDPRESS_DB_HOST: mysql
+   WORDPRESS_DB_USER: root
+   WORDPRESS_DB_PASSWORD: root
+   WORDPRESS_DB_NAME: mywordpress
+
+ jupyter-lab:
+  build:
+   context: ./
+   dockerfile: jupyter.dockerfile
+  volumes:
+   - ./:/lab
+  working_dir: /lab
+  ports:
+   - "8888:8888"
+  command: jupyter-lab --ip=0.0.0.0 --allow-root --NotebookApp.token=''

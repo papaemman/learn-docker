@@ -1,0 +1,4 @@
+
+Cheatsheet (github repository): 
+- https://github.com/wsargent/docker-cheat-sheet
+- https://phoenixnap.com/kb/list-of-docker-commands-cheat-sheet

@@ -1,0 +1,161 @@
+===================================
+Package your Shiny app with docker
+===================================
+
+
+Tutorials:
+-  https://www.bjoern-bos.de/post/learn-how-to-dockerize-a-shinyapp-in-7-steps/
+
+
+
+-----------------------------------------------------------------------------------------
+
+// Technology Dependencies //
+
+1. R and libraries
+2. Docker
+
+
+-----------------------------------------------------------------------------------------
+
+
+Project Directory structure (Files)
+├── Dockerfile
+├── README.md
+├── app.R
+└── environment.yml
+
+
+-----------------------------------------------------------------------------------------
+
+// Deploy a Local Shiny app using docker //
+
+
+1. Write the shiny app (shiny_app.R)
+
+2. Write the Dockerfile (Dockerfile)
+
+3. Write the conda env definition file (environment.yml)
+
+4. Build the docker container (where the Dockerfile is located)
+
+   $ docker build -t r-shiny-app .
+
+
+5. Run the RShiny App
+
+   $ docker run -it -p 8080:8080 r-shiny-app
+
+
+You should see a message saying Listening on http://0.0.0.0:8080.
+Once you see that you’re all set!
+Open up your browser at localhost:8080 to see your application in action!
+
+
+
+-----------------------------------------------------------------------------------------
+
+// Deploy a shiny app from github using docker //
+
+
+--> Step 1: Create an image
+
+$ docker build -t shiny_app_ml_image --build-arg GIT_USERNAME=panagiotis-papaemmanouil --build-arg GIT_PASSWORD=787833eea85e075eea17112a0a7752945865d423 --build-arg GIT_BRANCH=test-branch .
+
+
+--> Step 2: 
+
+$ run container option1
+$ docker run -d -p 80:3838 -v /srv/shinylog/:/var/log/shiny-server/ --name shiny_app_ml_container shiny_app_ml_image
+$ docker stop shiny_app_ml_container
+$ docker stop shiny_app_ml_container
+$ docker rm -f shiny_app_ml_container
+
+
+get bash from container:
+$ docker exec -it shiny_app_ml_container /bin/sh
+
+# inside container:
+cd /var/log/shiny-server
+
+
+
+-------------------------------------------------------------------------------------------
+
+
+
+
+
+$ cd ~
+$ mkdir Docker_ShinyApp
+
+Docker_ShinyApp
+└── app
+    ├── server.R
+    ├── ui.R
+    ├── global.r
+    ├── about.html
+    └── data.csv
+
+
+
+4. Add configuration files for your ShinyApp
+
+
+Docker_ShinyApp
+├── Dockerfile
+├── shiny-server.conf
+├── shiny-server.sh
+└── app
+    ├── server.R
+    ├── ui.R
+    ├── global.r
+    ├── about.html
+    └── data.csv
+
+
+5. Build the docker image
+
+Building the Docker Image is straightforward. Make sure you are in the Docker_ShinyApp directory with the Terminal and 
+type in:
+
+$ docker build -t My_ShinyApp .
+
+You can name the Docker Image whatever you like. 
+For example, I chose the tag My_ShinyApp.
+
+6. Run the docker image with your ShinyApp
+
+$ docker run -p 80:80 My_SinyApp
+
+Now, you can open the app with any browser by visiting http://localhost :
+
+
+7. Transfer the ShinyApp to a web server and deploy it online
+
+To save your Docker Image as a tar-archive, you simply type into your terminal:
+
+$ docker save -o ~/My_ShinyApp.tar My_ShinyApp
+
+To deploy your Docker Image on a web server, you simply copy this file to your server.
+
+$ docker load -i My_ShinyApp.tar
+$ docker run MyShinyApp
+
+
+With the IP address of your server, you should be able to access your ShinyApp. 
+Simply type in the IP address of your server in a browser. 
+If you like, you can add a domain name or point a subdomain to your ShinyApp.
+That way, users can better remember how to access your and if you change to another server,
+you simply adjust the DNS settings of your domain without losing any users.
+
+
+
+
+
+
+
+
+
+
+

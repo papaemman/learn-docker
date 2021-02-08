@@ -1,0 +1,6 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Link to docker-science/cookiecutter-docker-science: Cookiecutter template for data scientists working with Docker containers
+Type=Link
+URL=https://github.com/docker-science/cookiecutter-docker-science
+Icon=text-html

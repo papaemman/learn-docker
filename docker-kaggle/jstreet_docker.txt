@@ -1,0 +1,304 @@
+===============================
+Compete in Kaggle using Docker
+===============================
+
+tl;dr
+
+
+-> Connect VSCode server to docker container
+
+Open VScode and hit connect to jstreet-container
+
+
+-> Start and Open Jupyter notebook
+
+$ ssh panagiotis.medoid@tiger.ngsqintl.com 
+$ docker ps
+$ docker exec -ti jstreet-container bash
+$ jupyter-notebook --no-browser --ip=0.0.0.0 --port=8888 --allow-root
+Open Jupyter in localhost:8888
+
+
+
+
+------------------------------------------------------------------------
+
+Why docker?
+
+- Identical development environment with kaggle kernels
+- For code competitionS I have to make sure that the local develped solution
+  will be run in Kaggle too 
+
+-------------------------------------------------------------------------------
+
+// Links  //
+
+Medoid links
+
+https://github.com/medoidai/dockerized-environments-deploy-tool/blob/master/docker-files/ubuntu-base-image/Dockerfile
+
+https://docs.google.com/document/d/1snX1xIfyVCWbZjyijYmkcedPzLjje0vkgXvegz3tGec/edit
+
+
+Kaggle docker python: 
+- https://github.com/Kaggle/docker-python
+
+
+Links for local docker containers
+- https://code.visualstudio.com/docs/remote/containers
+- https://white-noise.xyz/2019/12/02/using-docker-to-run-kaggle-kernels-locally-on-your-linux-machine/
+
+
+Jupyter notebook
+- https://stackoverflow.com/questions/37576193/create-ssh-tunnel-to-remote-docker-container-running-jupyter-notebook
+- ttps://stackoverflow.com/questions/38830610/access-jupyter-notebook-running-on-docker-container
+
+
+------------------------------------------------------------------------
+
+
+// Steps to setup kaggle docker container to a remote server //
+
+
+1. Connect to remote server
+
+
+2. Install the docker community edition 
+$ docker --version
+$ docker ps
+
+
+3. Get kaggle docker image
+
+$ docker images
+$ docker pull gcr.io/kaggle-images/python:latest
+
+
+4. Create and Run a new docker container based on kaggle docker image
+
+$ docker run -d --name jstreet-container -p 8888:8888 -p 5000:22 -v /home/panagiotis.medoid/jstreet_docker:/home/jstreet  gcr.io/kaggle-images/python
+
+
+--name : give a name to container
+-p     : export a port from container to host (<port_from_host>:<port_inside_container>)
+	 22   -> default openssh port
+	 8888 -> default jupyter-notebook port
+
+-v     : mount a volume (directory) from container to host (<dir/on/host>:<dir/inside/the/container>)
+
+
+
+Note: Be carefull here to define the correct directory structure inside the docker container
+      Use /kaggle not /home/jstreet as directory inside the docker container
+
+$ docker run -d --name jstreet-container -p 8888:8888 -p 5000:22 -v /home/panagiotis.medoid/jstreet_docker:/kaggle  gcr.io/kaggle-images/python
+
+
+
+5. Get into the docker container and install some more helper pacakges
+
+$ docker inspect jstreet-container
+$ docker exec -ti jstreet-container bash
+$ apt-get install htop
+$ apt-get install nano
+$ apt-get install tree
+
+$ pip install jupyter_nbextensions_configurator jupyter_contrib_nbextensions
+$ jupyter contrib nbextension install --user
+$ jupyter nbextensions_configurator enable --user
+$ pip install ipywidgets
+$ jupyter nbextension enable --py widgetsnbextension
+
+
+6. Setup the kaggle API and download the dataset
+
+- Save the kaggle.json token from Kaggle Account webapge into ~/.kaggle directory inside the docker container
+
+- Create the appropriate data structure 
+
+$ cd /home/jstreet/
+$ mkdir input
+$ cd input
+$ kaggle competitions download -c jane-street-market-prediction
+$ unzip *.zip
+
+
+7. Create the correct project structure to match the Kaggle environment
+
+.
+├── input
+│   ├── example_sample_submission.csv
+│   ├── example_test.csv
+│   ├── features.csv
+│   ├── train.csv
+│   └── janestreet
+├── models
+├── notebooks
+└── src
+    ├── __init__.py
+    ├── test.py
+    └── utils.py
+
+
+
+8. Update the PYTHONPATH environment variable in order to be able to use custome prebuild packages
+
+.
+├── __init__.py
+├── __pycache__
+│   ├── __init__.cpython-36.pyc
+│   └── __init__.cpython-37.pyc
+└── competition.cpython-37m-x86_64-linux-gnu.so
+
+Add this line to bashrc to run every time on start up
+export PYTHONPATH=$PYTHONPATH:/home/jstreet/input 
+
+Note: The sub-module .competitions is provided in compiled form (for obvious reasons).
+But it is compiled for x86, 64-bit, Linux GNU. 
+
+$ source .bashrc
+$ cd to/random/dir
+$ python
+>>> import janestreet 
+>>> (DONE!)
+
+
+9. Connect and run VS Code from my local operating system, inside the container running on server.
+
+--> Instructions:
+
+I have to create a running openssh server inside docker container in order to connect straight to this from my local machine.
+I don't connect to remote server in which the container running, 
+but instead I connect straight inside the docker container using openssh server.
+
+In order to connect using the ssh, I need to set passwordless ssh authentication.
+For this I have to copy the id_rsa.pub key from my local machine
+into the ~./ssh/ directory, to authorized_keys file, to running docker container.
+
+
+--> Steps:
+https://github.com/medoidai/dockerized-environments-deploy-tool/blob/master/docker-files/ubuntu-base-image/Dockerfile
+I. Login to server and into the docker container
+
+(local machine)$ ssh panagiotis.medoid@tiger.ngsqintl.com
+
+(server)       $ docker ps
+(server)       $ docker exec -ti jstreet-container bash
+
+(running container) 
+
+#> apt-get update && apt-get install -y openssh-server
+#> mkdir /var/run/sshd
+#> sed -ri 's/^#?PermitRootLogin\s+.*/PermitRootLogin without-password/' /etc/ssh/sshd_config
+#> sed -ri 's/^#?UsePAM\s+.*/UsePAM no/' /etc/ssh/sshd_config
+#> sed -ri 's/^#?PasswordAuthentication\s+.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+#> sed -ri 's/^#?ChallengeResponseAuthentication\s+.*/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+#> mkdir /root/.ssh
+#> apt-get update && apt-get install -y locales
+#> locale-gen en_US.UTF-8
+#> apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+#>/usr/sbin/sshd
+
+
+
+II. Set ssh passwordless login
+
+(local machine) $ cat ~/.ssh/id_rsa.pub (and COPY)
+
+(container)     $ mkdir ~/.ssh
+(container)     $ cd ~./ssh
+(container)     $ nano authorized_keys (and copy the id_rsa.pub key, save and exit)
+(container)     $ cat authorized_keys (check results)
+Start the openssh server
+(container)     $  /usr/sbin/sshd
+
+III. Add the new ssh server config file
+
+$ nano /home/user7/.ssh/config
+
+```
+Host jstreet_container
+  HostName 138.201.55.46
+  User root
+  Port 5000
+```
+
+
+Don't forget to specify the port 5000,
+because this is the exported port of the openssh server, from inside the docker container
+to the host machine of the docker container (-p 5000:22)
+
+
+IV. Test results
+
+- Open local terminal and run
+$ ssh jstreet_container
+This must connect the terminal inside the docker containe
+
+- Open VS Code and connect to jstreet_container from the Remote Explore pane
+
+
+
+10. Run a jupyter-notebook from docker container running on remote server 
+    and access it from the web browser
+
+
+- Make sure that the default jupyter port 8888 is been exported during
+  docker run -p 8888:8888
+  <port in remote server>:<port inside docker container>
+
+Connect to remote server
+Run docker container
+Login into docker container
+Start jupyter notebook
+Enable ssh tunneling
+
+
+$ jupyter-notebook --no-browser --ip=0.0.0.0 --port=8888 --allow-root
+
+
+--no-browser   : Don't ty to open browser for jupyter-notebook from inside docker
+--ip=0.0.0.0   : Define specific IP because 
+		 eitherwise running on localhost make it available only from inside the container.
+--port=8888    : Specify the exported port
+--allow-root   : allow connect as root user
+
+
+How to enable ssh tunneling
+
+- Open new terminal in local machine and create ssh tunneling
+$ ssh panagiotis.medoid@tiger.ngsqintl.com
+$ docker ps
+
+(not this) $ docker inspect jstreet-container (and find IP address) OR
+
+$ docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jstreet-container
+
+
+$ ssh -N -f -L localhost:8888:172.17.0.2:8888 panagiotis.medoid@tiger.ngsqintl.com
+
+
+
+
+---------------------------------------------------------------------------------
+
+// Common Errors //
+
+
+--> VSCode doesn't connect to remote sercver
+
+Test if I can connect from terminal
+$ ssh jupyter-conainer
+
+If I delete and recreate the docker container,
+then I will get a WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED. 
+
+Fix it using the provided command to remove the previous ECDSA key and add a new one
+$ ssh-keygen -f "/home/user7/.ssh/known_hosts" -R "[138.201.55.46]:5000"
+$ ssh jstreet_container 
+
+
+
+
+

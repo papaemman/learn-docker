@@ -1,0 +1,1 @@
+[{"/home/rstudio/kitematic":{"Source":"/mnt/extrahd/DATA/medoidData","Destination":"home/rstudio/kitematic","RW":true,"Name":"","Driver":"","Type":"bind","Propagation":"rprivate","Spec":{"Type":"bind","Source":"/mnt/extrahd/DATA/medoidData","Target":"home/rstudio/kitematic"},"SkipMountpointCreation":false}}]
