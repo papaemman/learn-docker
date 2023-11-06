@@ -1,0 +1,4 @@
+# START CRON JOB
+* * * * * echo "Hello world" >> /var/log/cron.log 2>&1
+* * * * * cd /water-ai && /usr/local/bin/poetry run python app/simple_script.py >> /var/log/cron.log 2>&1
+# END CRON JOB
