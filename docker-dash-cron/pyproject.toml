@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "3.9.18"
 pandas = "^2.0.3"
-dash = "^2.11.1"
+dash = "^2.15.0"
 gunicorn = "^21.2.0"
 
 [build-system]
